@@ -1,0 +1,75 @@
+[
+    {
+      "_version": "3.0",
+      "identification": {
+        "id": "manageTicketsCatalogId",
+        "title": "{{title}}",
+        "entityType": "catalog"
+      },
+      "payload": {
+        "viz": [
+          {
+            "appId": "tickets",
+            "vizId": "mngtickets"
+          }
+        ]
+      },
+      "texts": [
+        {
+          "locale": "",
+          "textDictionary": {
+            "title": "Manage Tickets Catalog"
+          }
+        }
+      ]
+    },
+    {
+      "_version": "3.0",
+      "identification": {
+        "id": "manageTicketsGroupId",
+        "title": "{{title}}",
+        "entityType": "group"
+      },
+      "payload": {
+        "viz": [
+          {
+            "appId": "tickets",
+            "vizId": "mngtickets"            
+          }
+        ]
+      },
+      "texts": [
+        {
+          "locale": "",
+          "textDictionary": {
+            "title": "Manage Tickets Group"
+          }
+        }
+      ]
+    },
+    {
+      "_version": "3.0",
+      "identification": {
+        "id": "manageTicketsRole",
+        "entityType": "role",
+        "title": "Manage Tickets Role"
+      },
+      "payload": {
+        "apps": [
+          {
+            "id": "tickets"
+          }
+        ],
+        "catalogs": [
+          {
+            "id": "manageTicketsCatalogId"
+          }
+        ],
+        "groups": [
+          {
+            "id": "manageTicketsGroupId"
+          }
+        ]
+      }
+    }
+  ]
