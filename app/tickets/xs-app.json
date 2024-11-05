@@ -1,0 +1,32 @@
+{
+    "welcomeFile": "/index.html",
+    "authenticationMethod": "route",
+    "routes": [
+      {        
+        "source": "^/odata/v4/tickets/(.*)$",      
+        "target": "/odata/v4/tickets/$1",
+        "destination": "poc-mt-tickets-srv-api",
+        "csrfProtection": false
+      },
+      {
+        "source": "^/resources/(.*)$",
+        "target": "/resources/$1",
+        "authenticationType": "none",
+        "destination": "ui5"
+      },
+      {
+        "source": "^/user-api(.*)",
+        "service": "sap-approuter-userapi"
+      },
+      {
+        "source": "^/index.html$",
+        "service": "html5-apps-repo-rt",
+        "cacheControl": "no-cache, no-store, must-revalidate"
+      },      
+      {
+        "source": "^(.*)$",
+        "target": "$1",
+        "service": "html5-apps-repo-rt"
+      }
+    ]
+  }

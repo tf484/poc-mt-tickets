@@ -1,0 +1,203 @@
+_schema-version: '3.1'
+ID: poc-mt-tickets
+version: 1.0.0
+description: "Aicomp MT POC Tickets"
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - cp workzone/cdm.json resources/cdm.json
+        - npx cds build --production
+modules:
+  # ----------------------- APP SERVICE  -----------------------------
+  - name: poc-mt-tickets-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+      readiness-health-check-type: http
+      readiness-health-check-http-endpoint: /health
+      memory: 256M
+      disk-quota: 256M
+    build-parameters:
+      builder: npm
+    provides:
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: poc-mt-tickets-auth
+      - name: poc-mt-tickets-db
+      - name: poc-mt-tickets-destination-service      
+      - name: poc-mt-tickets-logging  
+    # --------------------- WEBAPP DEPLOYER ----------------------      
+  - name: poc-mt-tickets-app-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: srv-api
+      - name: poc-mt-tickets-auth
+      - name: poc-mt-tickets-repo-html5-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - pocmttickets.zip
+          name: pocmttickets
+          target-path: resources/
+    parameters:
+      config:
+        destinations:
+          - forwardAuthToken: true
+            name: poc-mt-tickets-srv-api # must be used in xs-app.json as well
+            url: ~{srv-api/srv-url}
+          - name: ui5
+            url: https://ui5.sap.com
+  # HTML5 Module         
+  - name: pocmttickets
+    type: html5
+    path: app/tickets
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms:
+        []
+  # --------------------- DT destination -------------------------
+  # Destination deployer module - create CDM DT destination      
+  - name: poc-mt-tickets-destination-content
+    type: com.sap.application.content
+    requires:
+      - name: poc-mt-tickets-destination-service
+        parameters:
+          content-target: true
+      - name: poc-mt-tickets-html-repo-runtime
+        parameters:
+          service-key:
+            name: poc-mt-tickets-html5-app-runtime-key
+      # - name: poc-mt-tickets-repo-html5-host
+      #   parameters:
+      #     service-key:
+      #       name: poc-mt-tickets-repo-html5-host-key
+      # - name: poc-mt-tickets-auth
+      #   parameters:
+      #     service-key:
+      #       name: poc-mt-tickets-auth-key
+    parameters:
+      content:
+        subaccount:
+          destinations:
+            - Name: poc-mt-tickets-cdm
+              ServiceInstanceName: poc-mt-tickets-html5-app-runtime-service
+              ServiceKeyName: poc-mt-tickets-html5-app-runtime-key
+              #URL: https://html5-apps-repo-rt.${default-domain}/applications/cdm/pocticketscdm
+              URL: https://html5-apps-repo-rt.cfapps.us10.hana.ondemand.com/applications/cdm/pocticketscdm
+          existing_destinations_policy: update
+    build-parameters:
+      no-source: true
+
+  - name: poc-mt-tickets-mtx
+    type: nodejs
+    path: gen/mtx/sidecar
+    build-parameters:
+      builder: npm-ci
+    parameters:
+      memory: 256M
+      disk-quota: 512M
+    provides:
+      - name: mtx-api
+        properties:
+          mtx-url: ${default-url}
+    requires:
+      - name: poc-mt-tickets-db
+      - name: poc-mt-tickets-auth
+      - name: poc-mt-tickets-registry
+      - name: poc-mt-tickets-destination-service
+      - name: poc-mt-tickets-logging
+
+resources:
+  - name: poc-mt-tickets-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: poc-mt-tickets-${org}-${space}
+        tenant-mode: shared
+      service-keys:
+        - name: poc-mt-tickets-auth-key #need this to create the service key                  
+  - name: poc-mt-tickets-registry
+    type: org.cloudfoundry.managed-service
+    requires:
+      - name: mtx-api
+    parameters:
+      service: saas-registry
+      service-plan: application
+      config:
+        xsappname: poc-mt-tickets-${org}-${space}
+        appName: poc-mt-tickets-${org}-${space}
+        displayName: Aicomp Tickets App
+        description: Aicomp MT POC Tickets
+        category: 'Applications / Multi-Customer Partner Solutions'
+        appUrls:
+          getDependencies: ~{mtx-api/mtx-url}/-/cds/saas-provisioning/dependencies
+          onSubscription: ~{mtx-api/mtx-url}/-/cds/saas-provisioning/tenant/{tenantId}
+          onSubscriptionAsync: true
+          onUnSubscriptionAsync: true
+          onUpdateDependenciesAsync: true
+          callbackTimeoutMillis: 300000 # Increase if your deployments are taking longer than that
+  - name: poc-mt-tickets-db
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: service-manager
+      service-plan: container
+  - name: poc-mt-tickets-repo-html5-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-name: poc-mt-tickets-html5-srv
+      service-plan: app-host
+
+  # HTML5 app-runtime resource for CDM DT destination      
+  - name: poc-mt-tickets-html-repo-runtime
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service-name: poc-mt-tickets-html5-app-runtime-service
+      service-plan: app-runtime
+      service: html5-apps-repo
+  # Destination resource for CDM RT destination #############################
+  - name: poc-mt-tickets-destination-service
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        init_data:
+          subaccount:
+            destinations:
+              - Authentication: NoAuthentication
+                Name: poc-mt-tickets-rt
+                ProxyType: Internet
+                CEP.HTML5ContentProvider: true
+                HTML5.ForwardAuthToken: true
+                HTML5.DynamicDestination: true
+                Type: HTTP
+                URL: https://aic-dev.launchpad.cfapps.us10.hana.ondemand.com
+            existing_destinations_policy: update
+        version: 1.0.0
+      service: destination
+      service-name: poc-mt-tickets-destination-service
+      service-plan: lite
+  - name: poc-mt-tickets-logging
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: application-logs
+      service-name: poc-mt-tickets-${space}
+      service-plan: lite
