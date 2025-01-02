@@ -13,5 +13,6 @@ annotate Description with @(title : '{i18n>Description}');
 entity Tickets : cuid, managed {
     ticketNumber: TicketNumber;
     Description: Description;
+    price: Decimal;
 }
 

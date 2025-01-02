@@ -11,6 +11,11 @@ annotate service.Tickets with @(
                 $Type : 'UI.DataField',
                 Value : Description,
             },
+            {
+                $Type : 'UI.DataField',
+                Label: 'Price',
+                Value : price,
+            },
         ],
     },
     UI.Facets : [
@@ -29,6 +34,11 @@ annotate service.Tickets with @(
         {
             $Type : 'UI.DataField',
             Value : Description,
+        },
+        {
+                $Type : 'UI.DataField',
+                Label: 'Price',
+                Value : price,
         },
     ],
 );

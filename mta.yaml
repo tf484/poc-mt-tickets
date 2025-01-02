@@ -122,6 +122,7 @@ modules:
       - name: poc-mt-tickets-registry
       - name: poc-mt-tickets-destination-service
       - name: poc-mt-tickets-logging
+      - name: poc-mt-tickets-repo-html5-host      
 
 resources:
   - name: poc-mt-tickets-auth

@@ -19,7 +19,7 @@
         "service": "sap-approuter-userapi"
       },
       {
-        "source": "^/index.html$",
+        "source": "^/index.html",
         "service": "html5-apps-repo-rt",
         "cacheControl": "no-cache, no-store, must-revalidate"
       },      
