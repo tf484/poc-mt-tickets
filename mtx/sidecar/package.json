@@ -14,6 +14,11 @@
     "start": "cds-serve"
   },
   "cds": {
-    "profile": "mtx-sidecar"
+    "profile": "mtx-sidecar",
+    "audit-log": true,
+    "connectivity": true,
+    "destinations": true,
+    "html5-repo": true,
+    "portal": true
   }
 }
