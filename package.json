@@ -42,7 +42,19 @@
         "db": "hana",
         "auth": "xsuaa",
         "multitenancy": true
-      }
+      },
+      "[development]": {
+        "db": {
+          "credentials": {
+            "url": ":memory:"
+          }
+        }
+      },
+      "audit-log": true,
+      "connectivity": true,
+      "destinations": true,
+      "html5-repo": true,
+      "portal": true
     },
     "profile": "with-mtx-sidecar"
   }
